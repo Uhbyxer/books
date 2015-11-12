@@ -1,0 +1,193 @@
+git init
+git config --global user.name "taras"
+git config --global user.email taras@gmail.com
+git config --list
+
+
+git status 
+git status --untracked-files=normal 
+git status --untracked-files=all 
+
+git add .
+git rm --cached pom.xml
+$ git -a -m"Init" коміт з месаджом і індексом
+$ git checkout --"404.*" відкат файла
+
+$ git log
+$ git log --since=2.weeks
+$ git log -p -2   Останні зміни в
+$ git log  -2 
+$ git log --pretty=oneline -10
+$ git show 287aa2
+$ git log --pretty=oneline -10 --abbrev-commit Тільки декілька  символів
+$ git log --pretty=oneline -10 --abbrev-commit --decorate На якому коміті бренча
+$ git log --pretty=oneline -10 --abbrev-commit --decorate --graph
+
+Аліаси команд 
+$ git  config --global alias.plog 'log --pretty=oneline  --abbrev-commit --decorate --graph'
+
+
+
+
+
+
+Прописати нотепад++
+$ git config --global core.editor "'C:\Program Files (x86)\Notepad++\notepad++.exe' -multiInst -notabbar -nosession -noPlugin"
+
+Бранчі
+$ git checkout -b 'new_f' нова бранча з переключенням на неї
+$ git branch new_f2 без переключення
+$ git branch -v інфа по бранчах
+$ git branch -vv
+$ git push -u origin v2 пушнути бранчу
+$ git checkout -b  v2 origin/v2 - взяти її локально іншим юзером
+$ git branch -a -v всі гілки включно з сервером
+
+ВИДАЛЕнНЯ бранчей
+$ git branch -d v2 видалити бранч
+$ git checkout -b v2 4a540fa відновити його
+$ git push origin --delete v2 видалити серверну гілку
+--------
+$ git fetch origin -p видалити потім в іншого юзера
+$ git branch -D v2
+--------
+ 
+
+
+
+$ git checkout new_f2 переключення
+$ git checkout master
+
+Мердж
+$ git config --global merge.tool kdiff3
+$ git config --global git status
+$ git mergetool Якщо конфлікти
+
+
+'"C:\\Program Files\\KDiff3\\kdiff3" $BASE $LOCAL $REMOTE -o $MERGED' 
+
+Github
+git remote add origin https://github.com/Uhbyxer/git-project.git
+Список віддалених репо
+$ git remote
+$ git remote -v З лінками
+$ git push -u origin master ключ "у" що 2-раз не питав
+$ git config --global push.default matching Щоб пушало всі гілки
+
+Клон
+$ git clone https://github.com/Uhbyxer/git-project.git
+
+Дістати зміни локал репо
+$ git fetch 
+
+$ git pull
+
+//************************************************************************************************************
+$ git init --bare Репо прямо в папці
+$ git clear
+ls -la показати приховані
+git config --global user.name "taras"
+
+$ git log --pretty=oneline одна стрічка з месаджом коміта
+
+$ git show ck0205odcnd деталі коміта
+
+$ git checkout -b experiment Нова гілка
+
+git reset --hard Якщо ще не запушино
+
+$ git reset --hard head повернення до ост коміта
+
+$ git merge experiment мердж з іншою гілкою
+
+fast forward переміщення вказівника без мерджа(між гілками)
+
+------безпечний пул
+$ git pull --ff-only тільки ФФ не робити автоматом мерджа
+$ git merge --no-commit
+$ git commit -am"merged commit"
+$ git log --all   лог з серверним
+-------------------
+
+*******************
+REBASE
+на бранчі refactor
+git rebase master
+$ git rebase --continue
+потім фаст форвард мастера
+$ git merge refactor
+********************
+
+Відкати назад
+$ git checkout 454sdd54
+$ git checkout master
+$ git checkout -b exp2 можна там створити гілку
+
+$ git reflog історія хеда
+
+$ git checkout HEAD@{1}
+$ git show @ собака синонім хеда
+$ git checkout master~1  повернутись на один коміт до мастера
+^2 - 2-й парент коміта
+$ git checkout @~1 history.txt Повернути тільки один файл з попер. коміта
+
+$ git stash 
+$ git stash pop - повеорнути назад
+
+$ git checkout @ history.txt - Вернути останній коміт
+
+-----------
+$ git stash
+переключаєм на іншу гілку і
+$ git stash pop
+------------
+RESET
+--soft - перекидує тільки вказівник мастера(і хеда)
+--mixed - індекс і хед (по дефалту) 
+--hard затре файли в директорії
+
+$ git reset --hard @{1} - резет до попереднього коміта
+
+-----------------------------
+Різниця між чекаут і ресет
+чекаут - перемістити тільки хед (бранч не міняєьбся)
+Ресет
+-софт - бранч до 
+-міксед - індекс
+-хард - робоча папка (якщо гілка не опублікована)
+-------------------------------
+Якщо опублікована
+$ git revert - створює антикоміт до останнього
+--------------------------------
+Загальний алгоритм:
+Якщо не пушнуто то:
+-ресет (весь проджект)
+-чекаут (конкретний файл)
+
+Якщо ні
+-чекаут і ресет(хз як)
+-реверт
+---------------------------------
+Дивитись:
+www.gitguys.com
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
