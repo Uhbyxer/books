@@ -1,0 +1,21 @@
+http://blog.yuriytkach.com/2009/11/javaserver-faces.html
+
+12:42 - lit
+
+UI component
+-Renderer
+-Validator
+-Converter - переводить з строки в дату(напр.)
+-Backing bean - моделька даних
+-Events, Listeners
+-Messages - інфо при валідації(напр.)
+-navigation  - правила навіг. по сторінках (ХМЛ-ка)
+
+<navigation-case>
+
+.......
+<redirect/>
+</navigation-case>
+
+
+
