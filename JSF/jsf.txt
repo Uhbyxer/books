@@ -224,39 +224,273 @@ Err Msgs
 <h:message for="amount"/>
 <h:message for="amount" showSummary="true" showDetail="false"/>
 
+<h:inputText id="card" value="#{payment.card}">
+<f:validateLength minimum="13"/>
+</h:inputText>
+
+like this:
+<h:inputText id="card" value="#{payment.card}">
+<f:validator validatorId="javax.faces.validator.LengthValidator">
+<f:attribute name="minimum" value="13"/>
+</f:validator>
+</h:inputText>
+
+<h:commandButton value="Cancel" action="cancel" immediate="true"/>
+
+!!!!!!!
+@LuhnCheck
+CREDIT CARD VALIDATION
+
+Custom:
+ @FacesConverter(forClass=CreditCard.class)
+ public class CreditCardConverter implements Converter {
+........................
+listeners VS actions
+
+It is important to distinguish between action listeners and actions. In a nutshell,
+actions are designed for business logic and participate in navigation handling,
+whereas action listeners typically perform user interface logic and do not participate
+in navigation handling.
 
 
+Note that the JSF implementation always invokes action listeners before
+actions.
 
 
+• f:actionListener
+• f:valueChangeListener
+
+The tags have one advantage over the attributes: Tags let you attach multiple
+listeners to a single component.
+<f:valueChangeListener type="com.corejsf.CountryListener"/>
+<h:selectOneMenu value="#{form.country}" onchange="submit()"
+valueChangeListener="#{form.countryChanged}">
 
 
+value change events are normally fired after the Process Validations phase, and action events
+are normally fired after the Invoke Application phase
+
+To prevent validations for the other
+components in the form, we have one more thing to do, which is to call the
+renderResponse method of the FacesContext class at the end of our value change
+listener, like this:
+
+context.renderResponse();
+}
+------------------------------------------
+Params !!!
+
+<h:commandLink action="#{localeChanger.changeLocale('de')}">
+<h:graphicImage library="images" name="de_flag.gif" style="border: 0px"/>
+</h:commandLink>
+<h:commandLink action="#{localeChanger.changeLocale('en')}">
+<h:graphicImage library="images" name="en_flag.gif" style="border: 0px"/>
+</h:commandLink>
+On the server, the localeChanger method has a languageCode parameter to set the
+locale:
+public class LocaleChanger {
+public String changeLocale(String languageChange) {
+FacesContext context = FacesContext.getCurrentInstance();
+context.getViewRoot().setLocale(new Locale(languageCode));
+return null;
+}
+}
+****
+<h:commandLink immediate="true"
+action="#{localeChanger.changeLocale}">
+<f:param name="languageCode" value="de"/>
+<h:graphicImage library="images" name="de_flag.gif" style="border: 0px"/>
+</h:commandLink>
+
+public class LocaleChanger {
+public String changeLocale() {
+FacesContext context = FacesContext.getCurrentInstance();
+String languageCode = getLanguageCode(context);
+context.getViewRoot().setLocale(new Locale(languageCode));
+return null;
+}
+private String getLanguageCode(FacesContext context) {
+Map<String, String> params = context.getExternalContext().
+getRequestParameterMap();
+return params.get("languageCode");
+}
+
+***
+
+<h:commandLink immediate="true"
+actionListener="#{localeChanger.changeLocale}">
+<f:attribute name="languageCode" value="de"/>
+<h:graphicImage library="images" name="de_flag.gif" style="border: 0px"/>
+</h:commandLink>
+
+public class LocaleChanger {
+public void changeLocale(ActionEvent event) {
+UIComponent component = event.getComponent();
+String languageCode = getLanguageCode(component);
+FacesContext.getCurrentInstance()
+.getViewRoot().setLocale(new Locale(languageCode));
+}
+private String getLanguageCode(UIComponent component) {
+Map<String, Object> attrs = component.getAttributes();
+return (String) attrs.get("languageCode");
+}
+}
+
+******
+
+<h:commandLink immediate="true" action="#{localeChanger.changeLocale}">
+<f:setPropertyActionListener target="#{localeChanger.languageCode}" value="de"/>
+<h:graphicImage library="images" name="de_flag.gif" style="border: 0px"/>
+</h:commandLink>
+
+private String languageCode;
+public String changeLocale() {
+FacesContext context = FacesContext.getCurrentInstance();
+context.getViewRoot().setLocale(new Locale(languageCode));
+return null;
+}
+
+*******
+!!! Phase Events
+You can specify a phase listener for an individual
+page with a tag, such as the following, placed anywhere in that page:
+
+<f:phaseListener type="com.corejsf.PhaseTracker"/>
 
 
+Alternatively, you can specify global phase listeners in a faces configuration
+file, like this:
+
+<faces-config>
+<lifecycle>
+<phase-listener>com.corejsf.PhaseTracker</phase-listener>
+</lifecycle>
+</faces-config>
+
+You implement phase listeners by means of the PhaseListener interface from the
+javax.faces.event package. That interface defines three methods:
+• PhaseId getPhaseId()
+• void afterPhase(PhaseEvent)
+• void beforePhase(PhaseEvent)
+
+**
+Alternatively, you can enclose a JSF page in an f:view tag with beforePhase or
+afterPhase attributes. These attributes must point to methods of with the signature
+void listener(javax.faces.event.PhaseEvent). They are invoked before every
+phase except for “Restore view”. For example:
+<f:view beforePhase="#{backingBean.beforeListener}">
+...
+</f:view>
+**
+
+There are four ways in which a class can receive system events:
+With the f:event tag:
+<inputText value="#{...}">
+<f:event name="postValidate" listener="#{bean.method}"/>
+</inputText>
+
+public void listener(ComponentSystemEvent) throws AbortProcessingException
+
+--
+
+With an annotation for a UIComponent or Renderer class:
+@ListenerFor(systemEventClass=PreRenderViewEvent.class)
+
+--
+
+By being listed as a system event listener in faces-config.xml:
+<application>
+  <system-event-listener>
+    <system-event-listener-class>listenerClass</system-event-listener-class>
+    <system-event-class>eventClass</system-event-class>
+  </system-event-listener>
+</application>
+
+=====================
+!!!!
+Multi-Component Validation
+
+<h:panelGrid id="date" columns="2">
+<f:event type="postValidate" listener="#{bb.validateDate}"/>
+#{msgs.day}
+<h:inputText id="day" value="#{bb.day}" size="2" required="true"/>
+#{msgs.month}
+<h:inputText id="month" value="#{bb.month}" size="2" required="true"/>
+#{msgs.year}
 
 
+ublic void validateDate(ComponentSystemEvent event) {
+UIComponent source = event.getComponent();
+UIInput dayInput = (UIInput) source.findComponent("day");
+UIInput monthInput = (UIInput) source.findComponent("month");
+UIInput yearInput = (UIInput) source.findComponent("year");
+int d = ((Integer) dayInput.getLocalValue()).intValue();
+int m = ((Integer) monthInput.getLocalValue()).intValue();
+int y = ((Integer) yearInput.getLocalValue()).intValue();
+if (!isValidDate(d, m, y)) {
+FacesMessage message = com.corejsf.util.Messages.getMessage(
+"com.corejsf.messages", "invalidDate", null);
+message.setSeverity(FacesMessage.SEVERITY_ERROR);
+FacesContext context = FacesContext.getCurrentInstance();
+context.addMessage(source.getClientId(), message);
+context.renderResponse();
+}
+}
 
+!!!!!!!!
+Making Decisions before Rendering the View
 
+For example, you may want to make sure that a user has been logged in
+before showing a particular page. Enclose the page in an f:view tag and attach
+a listener:
 
+<f:view>
+<f:event type="preRenderView" listener="#{user.checkLogin}"/>
+<h:head>
+<title>...</title>
+</h:head>
+<h:body>
+...
+</h:body>
+</f:view>
 
+public void checkLogin(ComponentSystemEvent event) {
+if (!loggedIn) {
+FacesContext context = FacesContext.getCurrentInstance();
+ConfigurableNavigationHandler handler = (ConfigurableNavigationHandler)
+context.getApplication().getNavigationHandler();
+handler.performNavigation("login");
+}
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+=========================
+Composite
+You can implement a simple login component as follows:
+<html xmlns="http://www.w3.org/1999/xhtml"
+xmlns:h="http://java.sun.com/jsf/html"
+xmlns:ui="http://java.sun.com/jsf/facelets"
+xmlns:composite="http://java.sun.com/jsf/composite">
+<composite:interface>
+<composite:attribute user="user"/>
+<composite:attribute name="namePrompt"/>
+<composite:attribute name="passwordPrompt"/>
+<composite:attribute name="loginButtonText"/>
+<composite:attribute name="loginAction"
+method-signature="java.lang.String action()"/>
+</composite:interface>
+<composite:implementation>
+<h:form id="form">
+<h:panelGrid columns="2">
+#{cc.attrs.namePrompt}
+<h:inputText id="name" value="#{cc.attrs.user.name}"/>
+#{cc.attrs.passwordPrompt}
+<h:inputSecret id="password" value="#{cc.attrs.user.password}"/>
+</h:panelGrid>
+<p>
+<h:commandButton id="loginButton" value="#{cc.attrs.loginButtonText}"
+action="#{cc.attrs.loginAction}"/>
+</p>
+</h:form>
+</composite:implementation>
+</html>
 
