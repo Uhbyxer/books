@@ -494,3 +494,56 @@ action="#{cc.attrs.loginAction}"/>
 </composite:implementation>
 </html>
 
+===============================================
+AJAX
+
+<h:inputText id="name" value="#{user.name}">
+    <f:ajax event="blur" execute="@this" render="nameError"/>
+</h:inputText>
+
+--Multi
+
+<f:ajax event="blur" execute="@this passwordInput"
+render="nameError passwordError"/>
+
+@form, @all, or @none
+
+==
+f:ajax Tag Attributes
+
+disabled, event, execute, immediate,
+onerror(js) , 
+onevent(js): 
+begin
+complete
+success
+
+For a successful Ajax call, JSF invokes the onevent function when
+the Ajax call begins (begin), when it has been processed on the
+server (complete), and just before JSF renders the Ajax response
+(success).
+
+,listener
+
+JSF invokes this listener’s processAjaxBehavior method once during
+each Ajax call, in the Invoke Application phase of the life cycle (at
+the end of the execute portion of the life cycle).
+That method must have this signature: public void processAjax-
+Behavior(javax.faces.event.AjaxBehaviorEvent event) throws
+javax.faces.event.AbortProcessingException
+
+,render (If you do not specify the render attribute, it defaults to @none,)
+
+!!!
+Notice the naming convention JSF uses for events: Take the JavaScript event
+name, and strip the leading on. So onblur becomes blur, onkeyup becomes keyup, etc.
+Also notice that events can be the component events action and valueChange,
+instead of JavaScript events.
+!!!
+
+JSF Component’s Default Ajax Event:
+Command buttons and links --- action
+Text inputs, text areas, secret inputs, and all of the
+select components ----- valueChange
+
+
