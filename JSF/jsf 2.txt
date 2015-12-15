@@ -1,0 +1,21 @@
+Custom Renderer
+
+FacesRenderer(componentFamily="javax.faces.Input",
+rendererType="com.corejsf.Spinner")
+public class SpinnerRenderer extends Renderer {
+
+**
+Renderers extend the
+javax.faces.render.Renderer class. That class has seven methods, four of which are
+familiar:
+• void encodeBegin(FacesContext context, UIComponent component)
+• void encodeChildren(FacesContext context, UIComponent component)
+• void encodeEnd(FacesContext context, UIComponent component)
+• void decode(FacesContext context, UIComponent component)
+
+**
+DataSources
+
+@Resource(name="jdbc/mydb") private DataSource source;
+
+
