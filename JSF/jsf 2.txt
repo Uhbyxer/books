@@ -18,4 +18,93 @@ DataSources
 
 @Resource(name="jdbc/mydb") private DataSource source;
 
+****
+Ejb  - Stateful beans
+
+@Named("user") @SessionScoped @Stateful
+public class UserBean {
+private String name;
+@PersistenceContext(unitName="default") private EntityManager em;
+...
+public String getName() { return name; } // Accessed in JSF page
+public void setName(String newValue) { name = newValue; }
+public String login() { // Called from JSF page
+doLogin();
+if (loggedIn) return "loginSuccess";
+else return "loginFailure";
+}
+public void doLogin() { // Accesses database
+Query query = em.createQuery(...).setParameter("username", name);
+@SuppressWarnings("unchecked") List<Credentials> result
+= query.getResultList();
+...
+}
+}
+
+Container-Managed Authentication and Authorization
+
+For example, the following security constraint restricts all pages in the
+protected subdirectory to authenticated users who have the role of registereduser
+or invitedguest:
+<security-constraint>
+<web-resource-collection>
+<url-pattern>/faces/protected/*</url-pattern>
+<url-pattern>/protected/*</url-pattern>
+</web-resource-collection>
+<auth-constraint>
+<role-name>registereduser</role-name>
+<role-name>invitedguest</role-name>
+</auth-constraint>
+</security-constraint>
+
+****
+<login-config>
+<auth-method>FORM</auth-method>
+<form-login-config>
+<form-login-page>/login.html</form-login-page>
+<form-error-page>/noauth.html</form-error-page>
+</form-login-config>
+</login-config>
+
+**
+You are free to design any desired appearance for
+the login page, but you must include a mechanism to submit a request to
+j_security_check with request parameters named j_username and j_password. The
+following form will do the job:
+<form method="POST" action="j_security_check">
+User name: <input type="text" name="j_username"/>
+Password: <input type="password" name="j_password"/>
+<input type="submit" value="Login"/>
+</form>
+
+**You can also specify “basic” authentication by placing the following login
+configuration into web.xml:
+<login-config>
+<auth-method>BASIC</auth-method>
+<realm-name>This string shows up in the dialog</realm-name>
+</login-config>
+
+In the Configuration -> Security -> Realms menu, create a new realm called
+corejsfRealm (see Figure 12–13). Use the settings in Table 12–2 on page 524.
+Make a Groups table in the COREJSF database with these instructions:
+CREATE TABLE Groups (username VARCHAR(20), groupname VARCHAR(20));
+INSERT INTO Groups VALUES ('troosevelt', 'registereduser');
+INSERT INTO Groups VALUES ('troosevelt', 'invitedguest');
+INSERT INTO Groups VALUES ('tjefferson', 'invitedguest');
+
+**!!
+The HttpServletRequest yields a small
+amount of information, in particular, the name of the user who logged in. You
+get the request object from the external context:
+ExternalContext external
+= FacesContext.getCurrentInstance().getExternalContext();
+HttpServletRequest request
+= (HttpServletRequest) external.getRequest();
+String user = request.getRemoteUser();
+You can also test whether the current user belongs to a given role. For example:
+String role = "admin";
+boolean isAdmin = request.isUserInRole(role);
+
+
+
 
