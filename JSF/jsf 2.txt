@@ -103,7 +103,7 @@ HttpServletRequest request
 String user = request.getRemoteUser();
 You can also test whether the current user belongs to a given role. For example:
 String role = "admin";
-boolean isAdmin = request.isUserInRole(role);
+boolean isAdmin = request.isUserInRole(role);    
 
 
 
