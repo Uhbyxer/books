@@ -49,7 +49,7 @@ Often, you will want to include parameters with a GET request link.
 
 You can use the f:param tag to override view parameters. For example:
 <h:link outcome="index" includeViewParams="true" value="Skip">
-<f:param name="q" value="#{quizBean.currentProblem + 1}"/>
+    <f:param name="q" value="#{quizBean.currentProblem + 1}"/>
 </h:link>
 
 <h:commandLink action="index?faces-redirect=true&amp;includeViewParams=true"
@@ -59,31 +59,31 @@ value="Skip"/>
 NAvigation
 
 <navigation-case>
-<from-outcome>previous</from-outcome>
-<if>#{quizBean.currentQuestion != 0}</if>
-<to-view-id>/main.xhtml</to-view-id>
+   <from-outcome>previous</from-outcome>
+   <if>#{quizBean.currentQuestion != 0}</if>
+   <to-view-id>/main.xhtml</to-view-id>
 </navigation-case>
 
 --------------
 
 <navigation-case>
-<from-action>#{quizBean.answerAction}</from-action>
-<from-outcome>again</from-outcome>
-<to-view-id>/again.xhtml</to-view-id>
+  <from-action>#{quizBean.answerAction}</from-action>
+  <from-outcome>again</from-outcome>
+  <to-view-id>/again.xhtml</to-view-id>
 </navigation-case>
 
 
 <navigation-case>
 <from-action>#{quizBean.startOverAction}</from-action>
-<from-outcome>again</from-outcome>
-<to-view-id>/index.xhtml</to-view-id>
+  <from-outcome>again</from-outcome>
+  <to-view-id>/index.xhtml</to-view-id>
 </navigation-case>
 
 <navigation-rule>
-<from-view-id>/secure/*</from-view-id>
-<navigation-case>
+ <from-view-id>/secure/*</from-view-id>
+ <navigation-case>
 . . .
-</navigation-case>
+ </navigation-case>
 </navigation-rule>
 
 ----------<h>---------------
@@ -145,11 +145,11 @@ Locale
 
 public class LocaleChanger {
 ...
-public String englishAction() {
-FacesContext context = FacesContext.getCurrentInstance();
-context.getViewRoot().setLocale(Locale.ENGLISH);
-return null;
-}
+  public String englishAction() {
+      FacesContext context = FacesContext.getCurrentInstance();
+      context.getViewRoot().setLocale(Locale.ENGLISH);
+      return null;
+  }
 }
 -------------------------
 
@@ -170,14 +170,14 @@ Models:
 
 
 public class TableData implements Serializable {
-private static final Name[] names = new Name[] {
-new Name("William", "Dupont"),
-new Name("Anna", "Keeney"),
-new Name("Mariko", "Randor"),
-new Name("John", "Wilson")
-};
-private DataModel<Name> model = new ArrayDataModel<Name>(names);
-public DataModel<Name> getNames() { return model; }
+   private static final Name[] names = new Name[] {
+        new Name("William", "Dupont"),
+        new Name("Anna", "Keeney"),
+	new Name("Mariko", "Randor"),
+	new Name("John", "Wilson")
+    };
+	private DataModel<Name> model = new ArrayDataModel<Name>(names);
+	public DataModel<Name> getNames() { return model; }
 }
 =====================================
 Converter
