@@ -1,0 +1,9 @@
+col-md-2
+container
+container-fluid
+col-md-offset-2
+
+Hide cols
+<container-fluid>
+  <row>
+     <col-md-4 hidden-md visible-lg>

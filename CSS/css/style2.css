@@ -1,0 +1,49 @@
+
+.strong-red {
+    margin-top: 2px;
+    font-weight: bold;
+    color: #48cafa;
+    text-align: left;
+    text-decoration: line-through;
+    text-transform: capitalize;
+    text-indent: 100px;
+    letter-spacing: 0.5px;
+    word-spacing: 2px;
+    line-height: 30px;
+    font-variant: small-caps;
+    
+}
+
+#styles li {
+    list-style-type: upper-roman;
+    list-style-position: inside;
+    height: 65px;
+    display: block;
+    float: left;
+    
+}
+
+#styles li:hover {
+    background: yellow;
+    text-decoration-line: underline;
+    
+    
+   
+    
+}
+
+.point {
+    position: absolute;
+    left: 20px;
+    top: 15px;
+}
+
+.list {
+position: relative;        
+}
+
+#fixed {
+    position: absolute;
+    top:5px;
+    left: 10px;
+}
