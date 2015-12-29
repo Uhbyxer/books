@@ -1,6 +1,9 @@
 package sia.knights;
   
 public class BraveKnight implements Knight {
+	static{
+		System.out.println("hohohoh");
+	}
 
   private Quest quest;
 

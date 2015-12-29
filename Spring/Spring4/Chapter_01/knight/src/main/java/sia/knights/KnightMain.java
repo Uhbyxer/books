@@ -6,6 +6,8 @@ import org.springframework.context.support.
 public class KnightMain {
 
   public static void main(String[] args) throws Exception {
+	  
+	  System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&b MAIN");
     ClassPathXmlApplicationContext context = 
         new ClassPathXmlApplicationContext(
             "META-INF/spring/knight.xml");

@@ -1,6 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
+apply plugin:'application'
+mainClassName = "sia.knights.KnightMain"
 
 jar {
     baseName = 'knight'
@@ -25,3 +27,4 @@ dependencies {
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
 }
+

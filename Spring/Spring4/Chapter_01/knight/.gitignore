@@ -11,3 +11,7 @@ exploration
 *.iml
 *.ipr
 *.iws
+
+/build/
+/gradle/
+/gradle/wrapper/
