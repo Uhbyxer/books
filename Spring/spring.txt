@@ -1,0 +1,280 @@
+Spring is incredibly flexible, offering three primary wiring mechanisms:
+- Explicit configuration in XML
+- Explicit configuration in Java
+- Implicit bean discovery and automatic wiring
+
+@ComponentScan will default to scanning the same
+package as the configuration class
+
+Spring will scan that package and any subpackages underneath
+it, looking for classes that are annotated with @Component.
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:context="http://www.springframework.org/schema/context"
+xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd">
+<context:component-scan base-package="soundsystem" />
+</beans>
+
+@Component("lonelyHeartsClub")
+public class SgtPeppers implements CompactDisc {
+...
+}
+
+or
+
+@Named("lonelyHeartsClub")
+public class SgtPeppers implements CompactDisc {
+...
+}
+
+Specify package:
+@Configuration
+@ComponentScan("soundsystem")
+public class CDPlayerConfig {}
+
+Or, if you’d rather it be clear that you’re setting the base package, you can do so with
+the basePackages attribute:
+@Configuration
+@ComponentScan(basePackages="soundsystem") //or several packs:  @ComponentScan(basePackages={"soundsystem", "video"})
+public class CDPlayerConfig {}
+
+Rather than specify the packages as simple String values, @ComponentScan also
+offers you the option of specifying them via classes or interfaces that are in the
+packages:
+@Configuration
+@ComponentScan(basePackageClasses={CDPlayer.class, DVDPlayer.class})
+public class CDPlayerConfig {}
+
+To indicate that autowiring should be performed, you can use
+Spring’s @Autowired annotation.
+
+@Component
+public class CDPlayer implements MediaPlayer {
+private CompactDisc cd;
+@Autowired
+public CDPlayer(CompactDisc cd) {
+this.cd = cd;
+}
+public void play() {
+cd.play();
+}
+}
+
+Setters:
+@Autowired
+public void setCompactDisc(CompactDisc cd) {
+this.cd = cd;
+}
+
+If there are no matching beans, Spring will throw an exception as the application
+context is being created. To avoid that exception, you can set the required attribute
+on @Autowired to false:
+Listing 2.6 Injecting a CompactDisc into a CDPlayer bean using autowiring
+
+@Autowired(required=false)
+public CDPlayer(CompactDisc cd) {
+this.cd = cd;
+}
+
+@Autowired is a Spring-specific annotation. If it troubles you to be scattering
+Spring-specific annotations throughout your code for autowiring, you might consider
+using the @Inject annotation instead:
+package soundsystem;
+import javax.inject.Inject;
+import javax.inject.Named;
+@Named
+public class CDPlayer {
+...
+@Inject
+public CDPlayer(CompactDisc cd) {
+this.cd = cd;
+}
+...
+}
+
+The key to creating a JavaConfig class is to annotate it with @Configuration.
+
+--------------------------------------------------------------
+Environments and profiles
+@Configuration
+@Profile("dev")
+public class DevelopmentProfileConfig {
+
+Activating profiles
+There are several ways to set these properties:
+* As initialization parameters on DispatcherServlet
+* As context parameters of a web application
+* As JNDI entries
+* As environment variables
+* As JVM system properties
+* Using the @ActiveProfiles annotation on an integration test class
+
+<context-param>
+  <param-name>spring.profiles.default</param-name>
+  <param-value>dev</param-value>
+</context-param>
+
+
+<servlet>
+<servlet-name>appServlet</servlet-name>
+<servlet-class>
+org.springframework.web.servlet.DispatcherServlet
+</servlet-class>
+<init-param>
+<param-name>spring.profiles.default</param-name>
+<param-value>dev</param-value>
+</init-param>
+<load-on-startup>1</load-on-startup>
+</servlet>
+
+In Tests:
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes={PersistenceTestConfig.class})
+@ActiveProfiles("dev")
+public class PersistenceTest {
+...
+}
+
+Conditional beans
+@Bean
+@Conditional(MagicExistsCondition.class)
+public MagicBean magicBean() {
+return new MagicBean();
+}
+
+=========================================
+Designating a primary bean
+
+@Component
+@Primary
+public class IceCream implements Dessert { ... }
+
+Qualifying autowired beans
+@Autowired
+@Qualifier("iceCream")
+public void setDessert(Dessert dessert) {
+this.dessert = dessert;
+}
+
+CREATING CUSTOM QUALIFIERS
+@Component
+@Qualifier("cold")
+public class IceCream implements Dessert { ... }
+
+@Autowired
+@Qualifier("cold")
+public void setDessert(Dessert dessert) {
+this.dessert = dessert;
+}
+
+Custom
+@Target({ElementType.CONSTRUCTOR, ElementType.FIELD,
+ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier
+public @interface Creamy { }
+
+@Component
+@Cold
+@Fruity
+public class Popsicle implements Dessert { ... }
+
+@Autowired
+@Cold
+@Creamy
+public void setDessert(Dessert dessert) {
+this.dessert = dessert;
+}
+
+=====================================
+Scoping beans
+By default, all beans created in the Spring application context are created as singletons.
+
+*Singleton—One instance of the bean is created for the entire application.
+* Prototype—One instance of the bean is created every time the bean is injected
+into or retrieved from the Spring application context.
+* Session—In a web application, one instance of the bean is created for each session.
+* Request—In a web application, one instance of the bean is created for each
+request.
+
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class Notepad { ... }
+
+@Component
+@Scope(
+value=WebApplicationContext.SCOPE_SESSION,
+proxyMode=ScopedProxyMode.INTERFACES)
+public ShoppingCart cart() { ... }
+
+------
+As configured, proxyMode is set to ScopedProxyMode.INTERFACES, indicating
+that the proxy should implement the ShoppingCart interface and delegate to the
+implementation bean.
+This is fine (and the most ideal proxy mode) as long as ShoppingCart is an interface
+and not a class. But if ShoppingCart is a concrete class, there’s no way Spring can
+create an interface-based proxy. Instead, it must use CGLib to generate a class-based
+proxy. So, if the bean type is a concrete class, you must set proxyMode to ScopedProxy-
+Mode.TARGET_CLASS to indicate that the proxy should be generated as an extension of
+the target class.
+------
+
+<bean id="cart"
+class="com.myapp.ShoppingCart"
+scope="session">
+<aop:scoped-proxy />
+</bean>
+
+But you can ask it to generate an
+interface-based proxy by setting the proxy-target-class attribute to false:
+<bean id="cart"
+class="com.myapp.ShoppingCart"
+scope="session">
+<aop:scoped-proxy proxy-target-class="false" />
+</bean>
+
+
+Spring offers two ways of evaluating values at runtime:
+* Property placeholders
+* The Spring Expression Language (SpEL)
+
+
+@Configuration
+@PropertySource("classpath:/com/soundsystem/app.properties")
+public class ExpressiveConfig {
+@Autowired
+Environment env;
+@Bean
+public BlankDisc disc() {
+return new BlankDisc(
+env.getProperty("disc.title"),
+env.getProperty("disc.artist"));
+}
+}
+
+
+SpEl
+#{T(System).currentTimeMillis()} - t is type
+
+To guard against a
+NullPointerException, you can use the type-safe operator:
+#{artistSelector.selectArtist()?.toUpperCase()}
+
+T(java.lang.Math).PI - access to static
+
+#{T(java.lang.Math).PI * circle.radius ^ 2}
+
+If disc.title is null, then the expression evaluates
+to “Rattle and Hum”.
+#{disc.title ?: 'Rattle and Hum'}
+
+
+
+
+
+
