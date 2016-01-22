@@ -274,6 +274,51 @@ to “Rattle and Hum”.
 #{disc.title ?: 'Rattle and Hum'}
 
 
+**************************** Aspects
+
+* Before—The advice functionality takes place before the advised method is
+invoked.
+* After—The advice functionality takes place after the advised method completes,
+regardless of the outcome.
+* After-returning—The advice functionality takes place after the advised method
+successfully completes.
+* After-throwing—The advice functionality takes place after the advised method
+throws an exception.
+* Around—The advice wraps the advised method, providing some functionality
+before and after the advised method is invoked.
+
+
+Weaving is the process of applying aspects to a target object to create a new proxied
+object.
+
+* Compile time—Aspects are woven in when the target class is compiled. This
+requires a special compiler. AspectJ’s weaving compiler weaves aspects this way.
+* Class load time—Aspects are woven in when the target class is loaded into the
+JVM. This requires a special ClassLoader that enhances the target class’s bytecode
+before the class is introduced into the application. AspectJ 5’s load-time
+weaving (LTW) support weaves aspects this way.
+* Runtime—Aspects are woven in sometime during the execution of the application.
+Typically, an AOP container dynamically generates a proxy object that delegates
+to the target object while weaving in the aspects. This is how Spring AOP
+aspects are woven.
+
+Spring’s support for AOP comes in four styles:
+* Classic Spring proxy-based AOP
+* Pure-POJO aspects
+* @AspectJ annotation-driven aspects
+* Injected AspectJ aspects (available in all versions of Spring)
+
+<aop:config>
+<aop:aspect ref="audience">
+<aop:pointcut
+id="performance"
+expression="execution(** concert.Performance.perform(..))" />
+<aop:around
+pointcut-ref="performance"
+method="watchPerformance"/>
+</aop:aspect>
+</aop:config>
+
 
 
 

@@ -1,0 +1,4 @@
+
+Soap vs rest
+http://habrahabr.ru/post/131343/
+http://habrahabr.ru/post/134303/

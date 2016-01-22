@@ -1,0 +1,4 @@
+*In express mode, the broker operates with a limited set of nodes for use with a single integration server.
+*In scale mode, the broker operates with a limited set of nodes for use with unlimited integration servers.
+*In standard mode, the broker operates with all features enabled but you are limited to creating only one integration server.
+*In advanced mode, the broker operates with all features enabled, and there is no limit to the number of integration servers or the number of message flows deployed to each integration server.
