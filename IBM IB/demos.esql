@@ -1,0 +1,852 @@
+
+
+-- Declare local variable 
+DECLARE CurrentCustomer CHAR 'Smith';
+
+-- Loop through the input message
+SET OutputRoot.XMLNS.Invoice[] = 
+    (SELECT I FROM InputRoot.XMLNS.Invoice[] AS I
+              WHERE I.Customer.LastName = CurrentCustomer
+    );
+	
+
+You can use this alias technique with other SELECT constructs. For example, if you want to select all the records of the input message, and create an additional record:
+
+-- Loop through the input message
+SET OutputRoot.XMLNS.Invoice[] = 
+    (SELECT I, 'Customer' || I.Customer.LastName AS ExtraField 
+              FROM InputRoot.XMLNS.Invoice[] AS I
+    );
+
+
+You could also include an AS clause to place records in a subfolder in the message tree:
+SET OutputRoot.XMLNS.Invoice[] = 
+    (SELECT I AS Order
+            FROM InputRoot.XMLNS.Invoice[] AS I
+    );
+
+To several tables
+	SET flightInfo.{FIELDVALUE(flSeg.RPH)}.flight[] = SELECT FIELDVALUE(ticket.TravelerRefNumber) AS travelerRPH, 
+																	FIELDVALUE(ticket.PassengerTypeCode) AS travelerType,
+																	FIELDVALUE(traveler.ota:PersonName.ota:GivenName) AS travelerName
+								   							  FROM  airReservation.ota:Ticketing[] AS ticket, 
+								   								    airReservation.ota:TravelerInfo.ota:AirTraveler[] AS traveler 
+								   							  WHERE FIELDVALUE(ticket.FlightSegmentRefNumber) = FIELDVALUE(flSeg.RPH) AND
+								   									FIELDVALUE(ticket.TravelerRefNumber) = FIELDVALUE(traveler.ota:TravelerRefNumber.RPH);
+	
+
+Null check
+IF InputRoot.XMLNS.Invoice.InvoiceNo IS NULL THEN
+   DO;
+     -- more ESQL --
+END IF
+
+!!! Arrays
+You can refer to the last instance of a repeating field using the special [<] array index, and to instances relative to the last (for example, the second to last) as follows:
+Field[<] indicates the last element.
+Field[<1] indicates the last element.
+Field[<2] indicates the last but one element (the penultimate element).	
+
+IF Body.Invoice.Customer.Billing.Address[<] = 'Hampshire' THEN 
+      DO;
+     -- more ESQL --
+END IF;   
+IF Body.Invoice.Customer.Billing.Address[<2 ] = 'Southampton' THEN
+   DO;
+     -- more ESQL --
+END IF; 
+
+For with if
+
+FOR ALL Body.Invoice.Purchases."Item"[] 
+    AS I (I.Quantity <= 50)
+	
+specify SOME, or ANY, which are equivalent. In this case the quantified predicate returns TRUE if the sub-predicate returns TRUE for any instance of the repeating field. Only if the sub-predicate returns FALSE for all instances of the repeating field does the quantified predicate return FALSE.
+
+FOR ANY Body.Invoice.Purchases."Item"[]  
+    AS I (I.Title = 'The XML Companion')
+	
+Alternatively, you can use the CARDINALITY function to determine how many instances of a repeating field there are. For example:
+DECLARE I INTEGER CARDINALITY(Body.Invoice.Purchases."Item"[])
+
+!!!!Using anonymous field references	
+InputRoot.*[]
+
+Refers to the last child of the root of the input message, that is, the body of the message.
+InputRoot.*[1]
+
+Move reference
+-- Declare the dynamic reference
+DECLARE myref REFERENCE TO OutputRoot.XMLNS.Invoice.Purchases.Item[1];
+
+--  Continue processing for each item in the array
+WHILE LASTMOVE(myref)=TRUE 
+DO
+-- Add 1 to each item in the array
+   SET myref = myref + 1;
+-- Move the dynamic reference to the next item in the array
+   MOVE myref NEXTSIBLING;
+END WHILE;
+
+-------------------------------------------------------------- Creating XML --------------------------------------------------------------
+
+Input:
+
+<TestCase description="This is my TestCase">
+    <Identifier>ES03B305_T1</Identifier>
+    <Sport>Football</Sport>
+    <Date>01/02/2000</Date>
+    <Type>LEAGUE</Type>
+</TestCase>
+
+-- copy headers 
+DECLARE i INTEGER 1;
+DECLARE numHeaders INTEGER CARDINALITY(InputRoot.*[]);
+
+WHILE i < numHeaders DO
+    SET OutputRoot.*[i] = InputRoot.*[i]; 
+    SET i = i + 1; 
+END WHILE;
+
+CREATE FIELD OutputRoot.XMLNS.TestCase.description TYPE NameValue VALUE 'This is my TestCase';
+CREATE FIRSTCHILD OF OutputRoot.XMLNS.TestCase Domain('XMLNS') NAME 'Identifier' 
+                                VALUE InputRoot.XMLNS.TestCase.Identifier;
+CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase Domain('XMLNS') NAME 'Sport' 
+                                VALUE InputRoot.XMLNS.TestCase.Sport;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase Domain('XMLNS') NAME 'Date' 
+                                VALUE InputRoot.XMLNS.TestCase.Date;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase Domain('XMLNS') NAME 'Type' 
+                                VALUE InputRoot.XMLNS.TestCase.Type;
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Number TYPE NameValue 
+                                VALUE 'Premiership';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Result[1].Number TYPE NameValue VALUE  '1';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Result[1].Home TYPE Name;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[1].Home NAME 'Team' 
+                                VALUE 'Liverpool' ;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[1].Home NAME 'Score' 
+                                VALUE '4';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Result[1].Away TYPE Name;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[1].Away NAME 'Team' 
+                                VALUE 'Everton';
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[1].Away NAME 'Score' 
+                                VALUE '0';
+
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Result[2].Number TYPE NameValue VALUE '2';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Result[2].Home TYPE Name;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[2].Home NAME 'Team' 
+                                VALUE 'Manchester United';
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[2].Home NAME 'Score' 
+                                VALUE '2';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[1].Result[2].Away TYPE Name;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[2].Away NAME 'Team' 
+                                VALUE 'Arsenal';
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[1].Result[2].Away NAME 'Score' 
+                                VALUE '3';
+
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[2].Number TYPE NameValue 
+                                VALUE '2';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[2].Result[1].Number TYPE NameValue 
+                                VALUE  '1';
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[2].Result[1].Home TYPE Name;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[2].Result[1].Home NAME 'Team' 
+                                VALUE 'Port Vale';
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[2].Result[1].Home NAME 'Score' 
+                                VALUE '9' ;
+ CREATE FIELD OutputRoot.XMLNS.TestCase.Division[2].Result[1].Away TYPE Name;
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[2].Result[1].Away NAME 'Team' 
+                                VALUE 'Brentford';
+ CREATE LASTCHILD OF OutputRoot.XMLNS.TestCase.Division[2].Result[1].Away NAME 'Score' 
+                                VALUE '5';
+								
+								
+The output message:
+<TestCase description="This is my TestCase">
+  <Identifier>ES03B305_T1</Identifier>
+  <Sport>Football</Sport>
+  <Date>01/02/2000</Date>
+  <Type>LEAGUE</Type>
+  <Division Number="Premiership">
+    <Result Number="1">
+      <Home>
+        <Team>Liverpool</Team>
+        <Score>4</Score>
+      </Home>
+      <Away>
+        <Team>Everton</Team>
+        <Score>0</Score>      
+      </Away>
+    </Result>
+    <Result Number="2">
+      <Home>
+        <Team>Manchester United</Team>
+        <Score>2</Score>
+      </Home>
+      <Away>
+        <Team>Arsenal</Team>
+        <Score>3</Score>      
+      </Away>
+    </Result>
+  </Division>
+  <Division Number="2">
+    <Result Number="1">
+      <Home>
+        <Team>Port Vale</Team>
+        <Score>9</Score>
+      </Home>
+      <Away>
+        <Team>Brentford</Team>
+        <Score>5</Score>      
+      </Away>
+    </Result>
+  </Division>
+</TestCase>								
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Propagation:
+	SET OutputRoot = InputRoot;
+	PROPAGATE;
+	SET OutputRoot = InputRoot;
+	PROPAGATE TO TERMINAL 'out1';
+	SET OutputRoot = InputRoot;
+	PROPAGATE TO LABEL 'ThirdCopy';
+Not to delete:
+	SET OutputRoot = InputRoot;
+	PROPAGATE DELETE NONE;
+	PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+	PROPAGATE TO LABEL 'ThirdCopy';
+	
+	
+Strings:
+-- Remove anything following the delimiter from the string
+SET WorkingSource = SUBSTRING(WorkingSource FROM 1 FOR DelimiterPosition);
+SET WorkingSource = TRIM(TRAILING Delimiter FROM WorkingSource);
+	
+--CARDINALITY
+	<Field_top>
+			<field1></field1>
+			<field1></field1>
+			<field1></field1>
+			<field1></field1>
+			<field1></field1>
+	</Field_top>
+SET I = 1;
+SET J = CARDINALITY(InputRoot.XMLNS.Field_top.field1[]);
+WHILE  I <= J DO
+	SET OutputRoot.XMLNS.Output_top.Outfield1[I] = InputRoot.XMLNS.Field_top.field1[I];
+	SET I = I + 1;
+END WHILE;
+
+--SQL with Operators MAX, MIN, and COUNT
+(
+ SELECT SUM( CAST(I.Price AS DECIMAL) * CAST(I.Quantity AS INTEGER) )
+  FROM Body.Invoice.Purchases."Item"[] AS I
+) 
+
+Using COUNT(*) counts the total number of Item fields, regardless of whether any of the fields is NULL
+SELECT COUNT(*)
+  FROM Body.Invoice.Purchases."Item"[] AS I
+  
+ ==
+
+CARDINALITY(Body.Invoice.Purchases."Item"[])
+
+
+ WebSphere® MQ messages 
+ SET OutputRoot.MRM.Identifier = InputRoot.MQMD.MsgId;
+ 
+ 
+ Setting up JMS destination lists
+ CREATE PROCEDURE CreateJMSDestinationList() BEGIN
+  SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1]  = 'jndi://TestDestQueue1';
+  SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[2]  = 'jndi://TestDestQueue2';
+  SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[3]  = 'jndi://TestDestQueue3';
+END;
+
+
+Setting env vars
+
+SET Environment.Variables = 
+      ROW('granary' AS bread, 'reisling' AS wine, 'stilton' AS cheese);
+SET Environment.Variables.Colors[] = 
+      LIST{'yellow', 'green', 'blue', 'red', 'black'};
+SET Environment.Variables.Country[] = LIST{ROW('UK' AS name, 'pound' AS currency),
+   	 ROW('USA' AS name, 'dollar' AS currency)};
+	 
+	 
+ExceptionList
+DECLARE start REFERENCE TO ExceptionList.*[1];
+
+-- Loop through the exception list children
+WHILE start.Number IS NOT NULL DO 
+   -- more ESQL
+
+   -- Move start to the last child of the field to which it currently points 
+   MOVE start LASTCHILD;
+END WHILE;	 
+	 
+	 
+casting types
+IF CAST(Body.Invoice.InvoiceDate AS DATE) = CURRENT_DATE THEN
+
+=====================================================================================
+USING SELECT FUNCTION
+ SET OutputRoot.XMLNS.Data.Output[] =
+    (SELECT R.Quantity, R.Author FROM InputRoot.XMLNS.Invoice.Purchases.Item[] AS R
+   );
+   
+ Result:
+<Data>
+  <Output>
+     <Quantity>2</Quantity>
+     <Author>Neil Bradley</Author>
+  </Output>
+  <Output>
+     <Quantity>1</Quantity>
+     <Author>Don Chamberlin</Author>
+  </Output>
+  <Output>
+     <Quantity>1</Quantity>
+     <Author>Philip Heller, Simon Roberts</Author>
+  </Output>
+</Data>
+
+
+SET OutputRoot.XMLNS.Data.Output[] =
+    (SELECT R.Quantity.* AS Book.(XML.Attribute)Quantity, 
+            R.Author.*   AS Book.(XML.Attribute)Author
+            FROM InputRoot.XMLNS.Invoice.Purchases.Item[] AS R
+    );
+
+<Data>
+ <Output>
+  <Book Quantity="2" Author="Neil Bradley"/>
+ </Output>
+ <Output>
+  <Book Quantity="1" Author="Don Chamberlin"/>
+ </Output>
+ <Output>
+  <Book Quantity="1" Author="Philip Heller, Simon Roberts"/>
+ </Output>
+</Data>
+
+
+
+
+	
+=====================================================================================	 
+ 
+INPUT:
+
+ <Invoice>
+  <InvoiceNo>300524</InvoiceNo>
+  <InvoiceDate>2000-12-07</InvoiceDate>
+  <InvoiceTime>12:40:00</InvoiceTime>
+  <TillNumber>3</TillNumber>
+  <Cashier StaffNo='089'>Mary</Cashier>
+  <Customer>
+    <FirstName>Andrew</FirstName>
+    <LastName>Smith</LastName>
+    <Title>Mr</Title>
+    <DOB>20-01-70</DOB>
+    <PhoneHome>01962818000</PhoneHome>
+    <PhoneWork />
+    <Billing>
+      <Address>14 High Street</Address>
+      <Address>Hursley Village</Address>
+      <Address>Hampshire</Address>
+      <PostCode>SO213JR</PostCode>
+    </Billing>
+  </Customer>
+  <Payment>
+    <CardType>Visa</CardType>
+    <CardNo>4921682832258418</CardNo>
+    <CardName>Mr Andrew J. Smith</CardName>
+    <Valid>1200</Valid>
+    <Expires>1101</Expires>
+  </Payment>
+  <Purchases>
+    <Item>
+      <Title Category='Computer' Form='Paperback' Edition='2'>The XML Companion</Title>
+      <ISBN>0201674866</ISBN>
+      <Author>Neil Bradley</Author>
+      <Publisher>Addison-Wesley</Publisher>
+      <PublishDate>October 1999</PublishDate>
+      <UnitPrice>27.95</UnitPrice>
+      <Quantity>2</Quantity>
+    </Item>
+    <Item>
+      <Title Category='Computer' Form='Paperback' Edition='2'>A Complete Guide to DB2 Universal Database</Title>
+      <ISBN>1558604820</ISBN>
+      <Author>Don Chamberlin</Author>
+      <Publisher>Morgan Kaufmann Publishers</Publisher>
+      <PublishDate>April 1998</PublishDate>
+      <UnitPrice>42.95</UnitPrice>
+      <Quantity>1</Quantity>
+    </Item>
+    <Item>
+      <Title Category='Computer' Form='Hardcover' Edition='0'>JAVA 2 Developers Handbook</Title>
+      <ISBN>0782121799</ISBN>
+      <Author>Philip Heller, Simon Roberts </Author>
+      <Publisher>Sybex, Inc.</Publisher>
+      <PublishDate>September 1998</PublishDate>
+      <UnitPrice>59.99</UnitPrice>
+      <Quantity>1</Quantity>
+    </Item>
+  </Purchases>
+  <StoreRecords/>
+  <DirectMail/>
+  <Error/>
+</Invoice>
+
+
+1).  
+SET OutputRoot.XMLNS.Data.Statement[] =
+    (SELECT I.Customer.Title                                     AS Customer.Title, 
+            I.Customer.FirstName || ' ' || I.Customer.LastName   AS Customer.Name,
+            COALESCE(I.Customer.PhoneHome,'')                    AS Customer.Phone,
+            (SELECT II.Title                          AS Desc,
+                    CAST(II.UnitPrice AS FLOAT) * 1.6 AS Cost,
+                    II.Quantity                       AS Qty 
+             FROM I.Purchases.Item[] AS II
+             WHERE  II.UnitPrice> 0.0              )     AS Purchases.Article[],
+            (SELECT SUM( CAST(II.UnitPrice AS FLOAT) *
+                    CAST(II.Quantity  AS FLOAT) *
+                    1.6                           )
+             FROM I.Purchases.Item[] AS II      )       AS Amount,
+            'Dollars'                                   AS Amount.(XML.Attribute)Currency
+            
+            FROM InputRoot.XMLNS.Invoice[] AS I
+            WHERE I.Customer.LastName <> 'Brown' 
+    );
+	
+Out:
+
+<Data>
+ <Statement>
+  <Customer>
+   <Title>Mr</Title>
+   <Name>Andrew Smith</Name>
+   <Phone>01962818000</Phone>
+  </Customer>
+  <Purchases>
+   <Article>
+    <Desc Category="Computer" Form="Paperback" Edition="2">The XML Companion</Desc>
+    <Cost>4.472E+1</Cost>
+    <Qty>2</Qty>
+   </Article>
+   <Article>
+    <Desc Category="Computer" Form="Paperback" Edition="2">
+          A Complete Guide to DB2 Universal Database</Desc>
+    <Cost>6.872E+1</Cost>
+    <Qty>1</Qty>
+   </Article>
+   <Article>
+    <Desc Category="Computer" Form="Hardcover" Edition="0">JAVA 2 Developers Handbook</Desc>
+    <Cost>9.5984E+1</Cost>
+    <Qty>1</Qty>
+   </Article>
+  </Purchases>
+  <Amount Currency="Dollars">2.54144E+2</Amount>
+ </Statement>
+</Data> 	
+	
+	
+Scalar return:
+
+1 + THE(SELECT ITEM T.a FROM Body.Test.A[] AS T WHERE T.b = '123')
+The THE keyword converts a list containing one item to the item itself:
+<Test>
+  <Result>27.95</Result>
+  <Result>42.95</Result>
+  <Result>59.99</Result>
+</Test>
+
+<Test>
+  <Result>
+    <UnitPrice>27.95</UnitPrice>
+  </Result>
+  <Result>
+    <UnitPrice>42.95</UnitPrice>
+  </Result>
+  <Result>
+    <UnitPrice>59.99</UnitPrice>
+  </Result>
+</Test>
+
+Selecting from a list of scalars
+
+Input:
+<Test>
+ <A>1</A>
+ <A>2</A>
+ <A>3</A>
+ <A>4</A>
+ <A>5</A>
+</Test>
+
+SET OutputRoot.XMLNS.Test.A[] = 
+  (SELECT ITEM A from InputBody.Test.A[]  
+   WHERE CAST(A AS INTEGER) BETWEEN 2 AND 4);
+   
+   
+    <A>2</A>
+    <A>3</A>
+    <A>4</A> 
+
+
+=================================================================================
+Joining
+
+Input:
+<Invoice>
+  <InvoiceNo>300524</InvoiceNo>
+  <InvoiceDate>2000-12-07</InvoiceDate>
+  <InvoiceTime>12:40:00</InvoiceTime>
+  <TillNumber>3</TillNumber>
+  <Cashier StaffNo='089'>Mary</Cashier>
+  <Customer>
+    <FirstName>Andrew</FirstName>
+    <LastName>Smith</LastName>
+    <Title>Mr</Title>
+    <DOB>20-01-70</DOB>
+    <PhoneHome>01962818000</PhoneHome>
+    <PhoneWork />
+    <Billing>
+      <Address>14 High Street</Address>
+      <Address>Hursley Village</Address>
+      <Address>Hampshire</Address>
+      <PostCode>SO213JR</PostCode>
+    </Billing>
+  </Customer>
+  <Payment>
+    <CardType>Visa</CardType>
+    <CardNo>4921682832258418</CardNo>
+    <CardName>Mr Andrew J. Smith</CardName>
+    <Valid>1200</Valid>
+    <Expires>1101</Expires>
+  </Payment>
+  <Purchases>
+    <Item>
+      <Title Category='Computer' Form='Paperback' Edition='2'>The XML Companion</Title>
+      <ISBN>0201674866</ISBN>
+      <Author>Neil Bradley</Author>
+      <Publisher>Addison-Wesley</Publisher>
+      <PublishDate>October 1999</PublishDate>
+      <UnitPrice>27.95</UnitPrice>
+      <Quantity>2</Quantity>
+    </Item>
+    <Item>
+      <Title Category='Computer' Form='Paperback' Edition='2'>A Complete Guide to DB2 Universal Database</Title>
+      <ISBN>1558604820</ISBN>
+      <Author>Don Chamberlin</Author>
+      <Publisher>Morgan Kaufmann Publishers</Publisher>
+      <PublishDate>April 1998</PublishDate>
+      <UnitPrice>42.95</UnitPrice>
+      <Quantity>1</Quantity>
+    </Item>
+    <Item>
+      <Title Category='Computer' Form='Hardcover' Edition='0'>JAVA 2 Developers Handbook</Title>
+      <ISBN>0782121799</ISBN>
+      <Author>Philip Heller, Simon Roberts </Author>
+      <Publisher>Sybex, Inc.</Publisher>
+      <PublishDate>September 1998</PublishDate>
+      <UnitPrice>59.99</UnitPrice>
+      <Quantity>1</Quantity>
+    </Item>
+  </Purchases>
+  <StoreRecords/>
+  <DirectMail/>
+  <Error/>
+</Invoice>
+
+
+SET OutputRoot.XMLNS.Items.Item[] = 
+   (SELECT D.LastName, D.Billing,
+           P.UnitPrice, P.Quantity 
+    FROM InputBody.Invoice.Customer[] AS D,
+         InputBody.Invoice.Purchases.Item[] AS P);
+	
+Result:
+	
+<Items>
+ <Item>
+  <LastName>Smith</LastName>
+  <Billing>
+   <Address>14 High Street</Address>
+   <Address>Hursley Village</Address>
+   <Address>Hampshire</Address>
+   <PostCode>SO213JR</PostCode>
+  </Billing>
+  <UnitPrice>27.95</UnitPrice>
+  <Quantity>2</Quantity>
+ </Item>
+ <Item>
+  <LastName>Smith</LastName>
+  <Billing>
+   <Address>14 High Street</Address>
+   <Address>Hursley Village</Address>
+   <Address>Hampshire</Address>
+   <PostCode>SO213JR</PostCode>
+  </Billing>
+  <UnitPrice>42.95</UnitPrice>
+  <Quantity>1</Quantity>
+ </Item>
+ <Item>
+  <LastName>Smith</LastName>
+  <Billing>
+   <Address>14 High Street</Address>
+   <Address>Hursley Village</Address>
+   <Address>Hampshire</Address>
+   <PostCode>SO213JR</PostCode>
+  </Billing>
+  <UnitPrice>59.99</UnitPrice>
+  <Quantity>1</Quantity>
+ </Item>
+</Items>
+
+
+Translating data in a message
+
+Input:
+<Data>
+  <Items>
+    <Item>
+      <Cat>1000</Cat>
+      <Description>Milk Chocolate Bar</Description>
+      <Type>Confectionary</Type>
+    </Item>
+    <Item>
+      <Cat>1001</Cat>
+      <Description>Daily Newspaper</Description>
+      <Type>NewsPapers</Type>
+    </Item>
+    <Item>
+      <Cat>1002</Cat>
+      <Description>Kitchen Sink</Description>
+      <Type>Hardware</Type>
+    </Item>
+  </Items>
+  <TranslateTable>
+    <Translate>
+      <Name>Confectionary</Name>
+      <Number>2000</Number>
+    </Translate>
+    <Translate>
+      <Name>NewsPapers</Name>
+      <Number>3000</Number>
+    </Translate>
+    <Translate>
+      <Name>Hardware</Name>
+      <Number>4000</Number>
+    </Translate>
+  </TranslateTable>
+</Data>
+
+SET OutputRoot.XMLNS.Result.Items.Item[] = 
+   (SELECT M.Cat, M.Description, T.Number As Type
+     FROM 
+       InputRoot.XMLNS.Data.Items.Item[]               As M,
+       InputRoot.XMLNS.Data.TranslateTable.Translate[] As T
+     WHERE M.Type = T.Name
+   );
+
+ Result:
+
+ <Result>
+  <Items>
+    <Item>
+      <Cat>1000</Cat>
+      <Description>Milk Chocolate Bar</Description>
+      <Type>2000</Type>
+    </Item>
+    <Item>
+      <Cat>1001</Cat>
+      <Description>Daily Newspaper</Description>
+      <Type>3000</Type>
+    </Item>
+    <Item>
+      <Cat>1002</Cat>
+      <Description>Kitchen Sink</Description>
+      <Type>4000</Type>
+    </Item>
+  </Items>
+</Result>
+
+
+================================
+null check
+   
+IF InputRoot.DFDL.MyMessage.Elem2.Child1 IS NULL THEN
+   DO:
+    -- more ESQL --
+END IF;
+
+   
+==============================  XML declaration
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE s1 PUBLIC "http://www.ibm.com/example.dtd" "example.dtd">
+<s1>........</s1>
+
+
+ESQL:
+CREATEFIRSTCHILD OF OutputRoot.XMLNSC TYPE XMLNSC.XmlDeclaration NAME 'XmlDeclaration'; 
+SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Version = '1.0'; 
+SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Encoding = 'UTF-8'; 
+SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)StandAlone = 'yes';
+
+Java:
+//Create the XML domain root node 
+MBElement xmlRoot =
+root.createElementAsLastChild(MbXMLNSC.PARSER_NAME);  
+//Create the XML declaration parent node 
+MbElement xmlDecl =
+xmlRoot.createElementAsFirstChild(MbXMLNSC.XML_DECLARATION);  
+
+xmlDecl.setName("XmlDeclaration");  
+
+MbElement version = xmlDecl.CreateElementAsFirstChild(MbXMLNSC.ATTRIBUTE, "Version", "1.0"); 
+MbElement encoding = xmlDecl.CreateElementAsFirstChild(MbXMLNSC.ATTRIBUTE, "Encoding", "utf-8"); 
+MbElement standalone = xmlDecl.CreateElementAsFirstChild(MbXMLNSC.ATTRIBUTE, "Standalone", "yes");
+
+==========================================
+XMLNSC: Attributes and elements
+XMLNSC.Folder
+XMLNSC.Field
+XMLNSC.CDataField
+
+XMLNSC.SingleAttribute
+XMLNSC.Attribute
+
+Input:
+<root id="12345">
+    <id>ABCDE</id>
+</root>
+
+SET value = FIELDVALUE(InputRoot.XMLNSC.root.(XMLNSC.Field)id) -- value is set to '12345'.
+
+Create the example message by using ESQL:
+
+CREATE LASTCHILD OF OutputRoot.XMLNSC Type XMLNSC.Folder Name 'root'; 
+-- Note : XMLNSC.Attribute could be used here as well. 
+SET OuputRoot.XMLNSC.root.(XMLNSC.Attribute)id = '12345'; 
+SET OuputRoot.XMLNSC.root.(XMLNSC.Field)id = 'ABCDE';
+
+==================================== Namespace declaration
+XMLNSC.SingleNamespaceDecl
+XMLNSC.DoubleNamespaceDecl
+XMLNSC.NamespaceDecl
+
+Example:
+DECLARE space1 NAMESPACE 'namespace1';
+SET OutputRoot.XMLNSC.space1:root.(XMLNSC.NamespaceDecl)xmlns:ns1 = space1;
+SET OutputRoot.XMLNSC.space1:root.space1:example = 'ABCDE';
+
+Out:
+<ns1:root xmlns:ns1="namespace1">
+    <ns1:example>ABCDE</ns1:example>
+</ns1:root>
+
+Adding a namespace declaration with a prefix
+
+SET OutputRoot.(XMLNSC.DoubleNamespaceDecl)xmlns:ns2 = space1;
+CREATE LASTCHILD OF OutputRoot IDENTITY (XMLNSC.DoubleNamespaceDecl)xmlns:ns2 VALUE space1;
+CREATE LASTCHILD OF OutputRoot TYPE XMLNSC.DoubleNamespaceDecl NAMESPACE 'xmlns' NAME 'ns2' VALUE space1;
+
+====================================================
+DIFFERENCE XMLNSC  FROM XMLNS
+
+1. The XMLNSC parser builds a compact message tree.
+2. It uses different field type constants.
+3. It discards inline DTDs
+
+The XMLNSC parser differs from the MRM XML
+
+1. The XMLNSC parser differs from the MRM XML parser in the following ways:
+The XMLNSC parser uses field types to identify the XML constructs in the message tree. The MRM parser distinguishes attributes from elements by matching the message tree against the message definition.
+2. When writing a message tree, the XMLNSC parser selects namespace prefixes by detecting and using xmlns attributes in the message tree. The MRM XML parser uses a table in the message set properties.
+3. The MRM parser does not include the root tag of the XML document in the message tree.
+
+<parent id="12345">
+    <id>ABCDE</id>
+</parent>
+
+SET value = FIELDVALUE(InputRoot.XMLNS.parent.(XML.Element)id)
+Result : value is 'ABCDE'
+
+SET value = FIELDVALUE(InputRoot.XMLNS.parent.(XML.Attr)id)
+Result : value is '12345'
+	
+================================= Creating a JSON object message
+{"Message":"Hello World"}
+
+SET OutputRoot.JSON.Data.Message = 'Hello World';
+
+In Java:
+MbElement outRoot = 
+   outMessage.getRootElement();
+MbElement outJsonRoot = 
+   outRoot.createElementAsLastChild(MbJSON.PARSER_NAME);
+MbElement outJsonData = 
+   outJsonRoot.createElementAsLastChild(MbElement.TYPE_NAME, MbJSON.DATA_ELEMENT_NAME, null);
+MbElement outJsonTest = 
+   outJsonData.createElementAsLastChild(MbElement.TYPE_NAME_VALUE, "Message", "Hello World");	
+	
+	
+JSON array: ======================================================	
+[{"Nam1":"val1","Num1":1},{"Nam2":"val2","Num2":2}]
+
+CREATE FIELD OutputRoot.JSON.Data IDENTITY(JSON.Array)Data;
+SET OutputRoot.JSON.Data.Item[1].Nam1 = 'val1';
+SET OutputRoot.JSON.Data.Item[1].Num1 = 1;
+SET OutputRoot.JSON.Data.Item[2].Nam2 = 'val2';
+SET OutputRoot.JSON.Data.Item[2].Num2 = 2;
+
+MbElement jsonData =    
+   outMessage.getRootElement().createElementAsLastChild(MbJSON.PARSER_NAME).createElementAsLastChild
+                                        (MbJSON.ARRAY,MbJSON.DATA_ELEMENT_NAME, null);
+MbElement jsonFirstArrayItem = 
+   jsonData.createElementAsLastChild(MbElement.TYPE_NAME, MbJSON.ARRAY_ITEM_NAME, null);
+   jsonFirstArrayItem.createElementAsFirstChild(MbElement.TYPE_NAME_VALUE, "Nam1", "val1");
+   jsonFirstArrayItem.createElementAsLastChild(MbElement.TYPE_NAME_VALUE, "Num1", new Integer(1));
+
+MbElement jsonSecondArrayItem = 
+   jsonData.createElementAsLastChild(MbElement.TYPE_NAME, MbJSON.ARRAY_ITEM_NAME, null);
+   jsonSecondArrayItem.createElementAsFirstChild(MbElement.TYPE_NAME_VALUE, "Nam2", "val2");
+   jsonSecondArrayItem.createElementAsLastChild(MbElement.TYPE_NAME_VALUE, "Num2", new Integer(2));
+   
+ The following example shows a possible JSON message:
+ {
+    "name" : "John Doe",
+    "age" : -1,
+    "known" : false,
+    "address" : { "street" : null,
+                  "city" : "unknown" },
+    "belongings" : ["this", "that", "the other"]
+}
+
+SET OutputRoot.JSON.Data.age =  InputRoot.JSON.Data.age + 22;   -- Set age to 21
+SET OutputRoot.JSON.Data.belongings.Item[4] = 'an other';
+SET OutputRoot.JSON.Data.belongings.Item[5] = 'and another';
+
+   
+MbElement ageEl = message.getRootElement().getLastChild().getFirstElementByPath("/JSON/Data/age");
+int age = ((Integer)ageEl.getValue()).intValue();
+ageEl.setValue(age + 22);       // Set age to 21
+inMessage.getRootElement().getLastChild().getFirstElementByPath("/JSON/Data/belongings/Item[3]").setValue(an other');
+
+JSON with a multidimensional array
+
+{
+    "customer" : "Joe",
+    "orders" : [ [ "thing1", 1, 10.1 ],
+                 [ "thing2", 2, 20.2 ]  ]
+}
+
+InputRoot.JSON.Data.orders.Item[1].Item[1]   -- 'thing1'
+InputRoot.JSON.Data.orders.*[2].*[3]         –- 2.02E+1
+
+inMessage.getRootElement().getFirstElementByPath("/JSON/Data/orders/Item[1]/Item[1]");  // 'thing1'
+inMessage.getRootElement().getFirstElementByPath("/JSON/Data/orders/*[2]/*[3]");  // '2.02'
+
+
